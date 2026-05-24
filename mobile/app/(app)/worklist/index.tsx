@@ -9,6 +9,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useWorklist } from '../../../hooks/useWorklist';
 import { COLORS, DEPT_CONFIG, TODAY } from '../../../lib/constants';
 import { WorklistJob, WorklistSection } from '../../../types';
+import NotesPane from '../../../components/worklist/NotesPane';
 
 // ─── Sub-tabs ────────────────────────────────────────────────────────────────
 type Pane = 'worklist' | 'calendar' | 'notes';
@@ -85,16 +86,18 @@ function SignOffModal({
 // ─── Add-job modal ────────────────────────────────────────────────────────────
 function AddJobModal({
   sectionId,
+  initialTitle = '',
   crewList,
   onAdd,
   onClose,
 }: {
   sectionId: string | null;
+  initialTitle?: string;
   crewList: { id: string; full_name: string; initials: string; color: string }[];
   onAdd: (params: { title: string; notes?: string; assigneeId?: string | null; isPriority?: boolean }) => void;
   onClose: () => void;
 }) {
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(initialTitle);
   const [notes, setNotes] = useState('');
   const [assignee, setAssignee] = useState<string | null>(null);
   const [priority, setPriority] = useState(false);
@@ -294,6 +297,7 @@ export default function WorklistScreen() {
   const [pane, setPane] = useState<Pane>('worklist');
   const [signOffJob, setSignOffJob] = useState<WorklistJob | null>(null);
   const [addingToSection, setAddingToSection] = useState<string | null | undefined>(undefined);
+  const [addJobInitialTitle, setAddJobInitialTitle] = useState('');
   const [addSectionName, setAddSectionName] = useState('');
   const [showAddSection, setShowAddSection] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -520,9 +524,16 @@ export default function WorklistScreen() {
       )}
 
       {!loading && pane === 'notes' && (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: COLORS.ink, marginBottom: 4 }}>Notes</Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: COLORS.inkMute }}>Personal and shared officer notes — coming in next build.</Text>
+        <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+          <NotesPane
+            authorId={profile.id}
+            vesselId={profile.vessel_id}
+            isOfficer={isHod}
+            onAddToWorklist={(text) => {
+              setAddJobInitialTitle(text);
+              setAddingToSection(null);
+            }}
+          />
         </ScrollView>
       )}
 
@@ -539,9 +550,10 @@ export default function WorklistScreen() {
       {addingToSection !== undefined && (
         <AddJobModal
           sectionId={addingToSection}
+          initialTitle={addJobInitialTitle}
           crewList={crewList}
           onAdd={handleAddJob}
-          onClose={() => setAddingToSection(undefined)}
+          onClose={() => { setAddingToSection(undefined); setAddJobInitialTitle(''); }}
         />
       )}
     </SafeAreaView>
