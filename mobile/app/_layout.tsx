@@ -9,7 +9,7 @@ import { useAuth } from '../hooks/useAuth';
 import '../global.css';
 
 export default function RootLayout() {
-  const { session, loading } = useAuth();
+  const { session, profile, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -26,12 +26,15 @@ export default function RootLayout() {
   useEffect(() => {
     if (loading || !fontsLoaded) return;
     const inAuth = segments[0] === '(auth)';
-    if (!session && !inAuth) {
-      router.replace('/(auth)');
-    } else if (session && inAuth) {
-      router.replace('/(app)/worklist');
+    if (!session) {
+      if (!inAuth) router.replace('/(auth)');
+    } else if (!profile) {
+      // Signed in but no profile (interrupted signup) — back to auth
+      if (!inAuth) router.replace('/(auth)');
+    } else {
+      if (inAuth) router.replace('/(app)/worklist');
     }
-  }, [session, loading, fontsLoaded, segments]);
+  }, [session, profile, loading, fontsLoaded, segments]);
 
   if (loading || !fontsLoaded) return null;
 

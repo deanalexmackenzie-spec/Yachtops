@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
 import { COLORS, DEPT_CONFIG } from '../../lib/constants';
 import { Department } from '../../types';
 
@@ -24,12 +25,32 @@ export default function LoginScreen() {
   const [role, setRole] = useState('');
   const [dept, setDept] = useState<Department | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showJoinCode, setShowJoinCode] = useState(false);
   const [joinCode, setJoinCode] = useState('');
+  const [vesselName, setVesselName] = useState<string | null>(null);
+  const [vesselId, setVesselId] = useState<string | null>(null);
+
+  async function lookupVessel(code: string) {
+    const { data, error } = await supabase.rpc('vessel_by_join_code', { code: code.trim().toUpperCase() });
+    if (error || !data || data.length === 0) return null;
+    return data[0] as { id: string; vessel_name: string; vessel_flag: string };
+  }
+
+  async function handleCodeChange(code: string) {
+    setJoinCode(code.toUpperCase());
+    setVesselName(null);
+    setVesselId(null);
+    if (code.trim().length === 6) {
+      const vessel = await lookupVessel(code);
+      if (vessel) { setVesselName(vessel.vessel_name); setVesselId(vessel.id); }
+    }
+  }
 
   async function handleSubmit() {
     if (!email || !password) { Alert.alert('Missing fields', 'Email and password are required.'); return; }
-    if (mode === 'signup' && (!fullName || !dept)) { Alert.alert('Missing fields', 'Please fill in all fields and select a department.'); return; }
+    if (mode === 'signup') {
+      if (!fullName || !dept) { Alert.alert('Missing fields', 'Please fill in all fields and select a department.'); return; }
+      if (!joinCode.trim()) { Alert.alert('Vessel code required', 'Enter the 6-character code from your captain.'); return; }
+    }
 
     setLoading(true);
 
@@ -37,7 +58,21 @@ export default function LoginScreen() {
       const err = await signIn(email.trim().toLowerCase(), password);
       if (err) Alert.alert('Sign in failed', err.message);
     } else {
-      const initials = fullName.trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+      // Validate vessel code before creating auth user
+      let vid = vesselId;
+      if (!vid) {
+        const vessel = await lookupVessel(joinCode);
+        if (!vessel) {
+          Alert.alert('Code not found', 'Check the code with your vessel manager.');
+          setLoading(false);
+          return;
+        }
+        vid = vessel.id;
+        setVesselName(vessel.vessel_name);
+        setVesselId(vid);
+      }
+
+      const initials = fullName.trim().split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 3);
       const color = DEPT_CONFIG[dept!].color;
       const err = await signUp(email.trim().toLowerCase(), password, {
         full_name: fullName.trim(),
@@ -46,7 +81,7 @@ export default function LoginScreen() {
         department: dept!,
         is_officer: false,
         color,
-        vessel_id: 'placeholder', // resolved after join code
+        vessel_id: vid,
       });
       if (err) Alert.alert('Sign up failed', err.message);
     }
@@ -127,17 +162,34 @@ export default function LoginScreen() {
             }
           </TouchableOpacity>
 
-          {/* Join vessel code */}
+          {/* Vessel join code — required for signup */}
           {mode === 'signup' && (
-            <TouchableOpacity style={s.secondary} onPress={() => setShowJoinCode(!showJoinCode)}>
-              <Ionicons name="key-outline" size={14} color={COLORS.inkSoft} />
-              <Text style={s.secondaryText}>Join with a vessel code</Text>
-            </TouchableOpacity>
-          )}
-          {showJoinCode && (
             <>
-              <Text style={s.label}>Vessel join code</Text>
-              <TextInput style={s.input} value={joinCode} onChangeText={setJoinCode} placeholder="6-character code" autoCapitalize="characters" maxLength={6} />
+              <Text style={[s.label, { marginTop: 4 }]}>Vessel join code</Text>
+              <View style={s.codeRow}>
+                <TextInput
+                  style={[s.codeInput, vesselName ? s.codeInputValid : null]}
+                  value={joinCode}
+                  onChangeText={handleCodeChange}
+                  placeholder="XXXXXX"
+                  placeholderTextColor={COLORS.inkMute}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={6}
+                />
+                {vesselName ? (
+                  <View style={s.vesselFound}>
+                    <Ionicons name="checkmark-circle" size={14} color={COLORS.done} />
+                    <Text style={s.vesselFoundTxt}>{vesselName}</Text>
+                  </View>
+                ) : joinCode.length === 6 ? (
+                  <View style={s.vesselFound}>
+                    <Ionicons name="close-circle" size={14} color={COLORS.alert} />
+                    <Text style={[s.vesselFoundTxt, { color: COLORS.alert }]}>Code not found</Text>
+                  </View>
+                ) : null}
+              </View>
+              <Text style={s.codeHint}>Ask your captain or vessel manager for the code.</Text>
             </>
           )}
 
@@ -194,10 +246,15 @@ const s = StyleSheet.create({
     alignItems: 'center', marginTop: 4, marginBottom: 8,
   },
   submitText: { color: 'white', fontSize: 14, fontWeight: '700', fontFamily: 'Inter_700Bold' },
-  secondary: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, padding: 12, marginBottom: 4,
+  codeRow: { gap: 8, marginBottom: 4 },
+  codeInput: {
+    borderWidth: 1, borderColor: COLORS.ruleStrong, borderRadius: 9,
+    padding: 12, fontSize: 18, color: COLORS.ink, letterSpacing: 6,
+    fontFamily: 'JetBrainsMono_500Medium', textAlign: 'center',
   },
-  secondaryText: { fontSize: 13, fontWeight: '600', color: COLORS.inkSoft, fontFamily: 'Inter_600SemiBold' },
+  codeInputValid: { borderColor: COLORS.done, backgroundColor: COLORS.doneSoft },
+  vesselFound: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 2 },
+  vesselFoundTxt: { fontSize: 12, color: COLORS.done, fontFamily: 'Inter_600SemiBold' },
+  codeHint: { fontSize: 11, color: COLORS.inkMute, fontFamily: 'Inter_400Regular', marginBottom: 16 },
   foot: { fontSize: 11, color: COLORS.inkMute, lineHeight: 16, marginTop: 16, borderTopWidth: 1, borderTopColor: COLORS.rule, paddingTop: 16, fontFamily: 'Inter_400Regular' },
 });
