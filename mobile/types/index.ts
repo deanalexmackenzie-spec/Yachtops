@@ -93,6 +93,6 @@ export interface CalendarEvent {
   vessel_id: string;
   title: string;
   date: string;
-  type: 'drill' | 'delivery' | 'owner' | 'charter' | 'other';
+  type: 'drill' | 'delivery' | 'owner' | 'charter' | 'survey' | 'other';
   notes: string | null;
 }

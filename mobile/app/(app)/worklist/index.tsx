@@ -10,6 +10,7 @@ import { useWorklist } from '../../../hooks/useWorklist';
 import { COLORS, DEPT_CONFIG, TODAY } from '../../../lib/constants';
 import { WorklistJob, WorklistSection } from '../../../types';
 import NotesPane from '../../../components/worklist/NotesPane';
+import CalendarPane from '../../../components/worklist/CalendarPane';
 
 // ─── Sub-tabs ────────────────────────────────────────────────────────────────
 type Pane = 'worklist' | 'calendar' | 'notes';
@@ -517,10 +518,13 @@ export default function WorklistScreen() {
       )}
 
       {!loading && pane === 'calendar' && (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: COLORS.ink, marginBottom: 4 }}>Look-ahead</Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: COLORS.inkMute }}>Calendar view coming soon — events and drills will appear here.</Text>
-        </ScrollView>
+        <CalendarPane
+          vesselId={profile.vessel_id}
+          isOfficer={isHod}
+          authorId={profile.id}
+          worklistStats={stats}
+          onBackToWorklist={() => setPane('worklist')}
+        />
       )}
 
       {!loading && pane === 'notes' && (
