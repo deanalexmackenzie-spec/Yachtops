@@ -28,10 +28,13 @@
   "devDependencies": {
     "@types/react": "~19.2.6",
     "babel-preset-expo": "~56.0.12",
+    "localtunnel": "^2.0.2",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
+    "start:lt": "node scripts/tunnel-lt.js",
+    "start:lan": "REACT_NATIVE_PACKAGER_HOSTNAME=${WIFI_IP} npx expo start --clear",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"
