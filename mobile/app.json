@@ -2,6 +2,7 @@
   "expo": {
     "name": "YachtOps",
     "slug": "yachtops",
+    "owner": "DMAC111",
     "scheme": "yachtops",
     "version": "1.0.0",
     "orientation": "portrait",
