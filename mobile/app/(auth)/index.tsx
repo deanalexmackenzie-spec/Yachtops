@@ -28,6 +28,7 @@ export default function LoginScreen() {
   const [joinCode, setJoinCode] = useState('');
   const [vesselName, setVesselName] = useState<string | null>(null);
   const [vesselId, setVesselId] = useState<string | null>(null);
+  const [isDeptHead, setIsDeptHead] = useState(false);
 
   async function lookupVessel(code: string) {
     const { data, error } = await supabase.rpc('vessel_by_join_code', { code: code.trim().toUpperCase() });
@@ -79,7 +80,7 @@ export default function LoginScreen() {
         role: role.trim() || 'Crew',
         initials,
         department: dept!,
-        is_officer: false,
+        is_officer: isDeptHead,
         color,
         vessel_id: vid,
       });
@@ -153,6 +154,21 @@ export default function LoginScreen() {
                 })}
               </View>
             </>
+          )}
+
+          {mode === 'signup' && (
+            <TouchableOpacity
+              style={[s.hodToggle, isDeptHead && s.hodToggleActive]}
+              onPress={() => setIsDeptHead(!isDeptHead)}
+            >
+              <View style={[s.hodCheck, isDeptHead && s.hodCheckActive]}>
+                {isDeptHead && <Ionicons name="checkmark" size={12} color="white" />}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.hodLabel, isDeptHead && { color: COLORS.ink }]}>I'm a department head or officer</Text>
+                <Text style={s.hodSub}>Bosun · Chief Stew · Chief Engineer · Head Chef · Captain</Text>
+              </View>
+            </TouchableOpacity>
           )}
 
           <TouchableOpacity style={s.submit} onPress={handleSubmit} disabled={loading}>
@@ -257,4 +273,17 @@ const s = StyleSheet.create({
   vesselFoundTxt: { fontSize: 12, color: COLORS.done, fontFamily: 'Inter_600SemiBold' },
   codeHint: { fontSize: 11, color: COLORS.inkMute, fontFamily: 'Inter_400Regular', marginBottom: 16 },
   foot: { fontSize: 11, color: COLORS.inkMute, lineHeight: 16, marginTop: 16, borderTopWidth: 1, borderTopColor: COLORS.rule, paddingTop: 16, fontFamily: 'Inter_400Regular' },
+  hodToggle: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+    padding: 14, borderRadius: 10, borderWidth: 1.5, borderColor: COLORS.rule,
+    backgroundColor: 'white', marginBottom: 16,
+  },
+  hodToggleActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accentSoft },
+  hodCheck: {
+    width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: COLORS.ruleStrong,
+    alignItems: 'center', justifyContent: 'center', marginTop: 1,
+  },
+  hodCheckActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  hodLabel: { fontSize: 13, fontWeight: '600', color: COLORS.inkSoft, fontFamily: 'Inter_600SemiBold' },
+  hodSub: { fontSize: 11, color: COLORS.inkMute, marginTop: 2, fontFamily: 'Inter_400Regular' },
 });
