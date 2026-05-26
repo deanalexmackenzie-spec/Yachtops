@@ -7,6 +7,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, In
 import { JetBrainsMono_400Regular, JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuth } from '../hooks/useAuth';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 // ─── Global error handler ────────────────────────────────────────────────────
 // Catches JS errors that happen before React renders (e.g. module-load throws).
@@ -58,6 +59,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Bound
 // ─── Root layout ──────────────────────────────────────────────────────────────
 function RootLayout() {
   const { session, profile, loading } = useAuth();
+  usePushNotifications(profile?.id);
   const segments = useSegments();
   const router = useRouter();
 

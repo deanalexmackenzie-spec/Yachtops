@@ -322,7 +322,7 @@ export default function WorklistScreen() {
     setPublishing(true);
     try {
       if (!worklist) await createWorklist(vesselId, dept, profile.id);
-      await publishWorklist(profile.id);
+      await publishWorklist(profile.id, profile.full_name);
     } finally {
       setPublishing(false);
     }

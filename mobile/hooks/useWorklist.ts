@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Worklist, WorklistSection, WorklistJob, Department, Profile } from '../types';
+import { sendWorklistPublishedNotification } from './usePushNotifications';
 
 export function useWorklist(vesselId: string | undefined, department: Department | undefined, date: string) {
   const [worklist, setWorklist] = useState<Worklist | null>(null);
@@ -77,11 +78,19 @@ export function useWorklist(vesselId: string | undefined, department: Department
     setWorklist({ ...worklist, morning_note: note });
   }
 
-  async function publishWorklist(publishedBy: string) {
+  async function publishWorklist(publishedBy: string, publisherName: string) {
     if (!worklist) return;
     const now = new Date().toISOString();
     await supabase.from('worklists').update({ published_at: now, published_by: publishedBy }).eq('id', worklist.id);
     setWorklist({ ...worklist, published_at: now, published_by: publishedBy });
+
+    // Fire-and-forget push to all crew in this department
+    sendWorklistPublishedNotification({
+      vesselId: worklist.vessel_id,
+      department: worklist.department,
+      date: worklist.date,
+      publisherName,
+    }).catch(() => {});
   }
 
   async function addSection(label: string) {

@@ -49,6 +49,13 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
+        name="projects"
+        options={{
+          title: 'Projects',
+          tabBarIcon: ({ focused, color }) => <TabIcon name={focused ? 'briefcase' : 'briefcase-outline'} focused={focused} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="watch"
         options={{
           title: 'Watch',

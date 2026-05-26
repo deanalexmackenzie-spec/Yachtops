@@ -17,7 +17,41 @@ export interface Profile {
   department: Department;
   is_officer: boolean;
   color: string;
+  push_token: string | null;
   created_at: string;
+}
+
+export type ProjectPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type ProjectStatus   = 'planning' | 'active' | 'on_hold' | 'complete';
+export type TaskStatus      = 'todo' | 'in_progress' | 'done';
+
+export interface Project {
+  id: string;
+  vessel_id: string;
+  title: string;
+  description: string | null;
+  department: Department | null;
+  priority: ProjectPriority;
+  status: ProjectStatus;
+  due_date: string | null;
+  created_by: string | null;
+  created_at: string;
+  tasks?: ProjectTask[];
+}
+
+export interface ProjectTask {
+  id: string;
+  project_id: string;
+  title: string;
+  notes: string | null;
+  assignee_id: string | null;
+  assignee?: Profile;
+  status: TaskStatus;
+  due_date: string | null;
+  position: number;
+  created_by: string | null;
+  created_at: string;
+  completed_at: string | null;
 }
 
 export interface Worklist {
