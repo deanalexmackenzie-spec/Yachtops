@@ -3,30 +3,11 @@
     "name": "YachtOps",
     "slug": "yachtops",
     "owner": "DMAC111",
-    "scheme": "yachtops",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "plugins": [
-      "expo-router",
-      "expo-secure-store",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#0c4a6e",
-          "sounds": []
-        }
-      ],
-      [
-        "expo-font",
-        {
-          "fonts": []
-        }
-      ]
-    ],
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yachtops.app"
@@ -42,9 +23,6 @@
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/favicon.png"
-    },
-    "experiments": {
-      "typedRoutes": true
     }
   }
 }
