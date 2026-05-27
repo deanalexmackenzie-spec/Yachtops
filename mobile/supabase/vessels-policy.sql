@@ -1,4 +1,9 @@
--- Run this after schema.sql
+-- ═══════════════════════════════════════════════════════════════
+-- YachtOps — Vessel join-code lookup RPC
+-- Run AFTER schema.sql
+-- Safe to re-run: CREATE OR REPLACE is idempotent.
+-- ═══════════════════════════════════════════════════════════════
+
 -- Allows the anon role to look up a vessel by join code (needed during signup)
 
 create or replace function public.vessel_by_join_code(code text)

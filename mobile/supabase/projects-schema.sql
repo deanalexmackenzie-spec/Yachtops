@@ -1,6 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════
 -- YachtOps — Projects schema
 -- Run AFTER schema.sql
+-- Safe to re-run: all statements are idempotent.
 -- ═══════════════════════════════════════════════════════════════
 
 create table if not exists public.projects (
@@ -36,12 +37,15 @@ create table if not exists public.project_tasks (
 alter table public.projects      enable row level security;
 alter table public.project_tasks enable row level security;
 
+drop policy if exists "vessel crew can read projects" on public.projects;
 create policy "vessel crew can read projects" on public.projects
   for select using (vessel_id = public.my_vessel_id());
 
+drop policy if exists "officers can manage projects" on public.projects;
 create policy "officers can manage projects" on public.projects
   for all using (vessel_id = public.my_vessel_id() and public.am_officer());
 
+drop policy if exists "vessel crew can read project tasks" on public.project_tasks;
 create policy "vessel crew can read project tasks" on public.project_tasks
   for select using (
     project_id in (
@@ -49,6 +53,7 @@ create policy "vessel crew can read project tasks" on public.project_tasks
     )
   );
 
+drop policy if exists "officers can manage project tasks" on public.project_tasks;
 create policy "officers can manage project tasks" on public.project_tasks
   for all using (
     project_id in (
@@ -56,15 +61,3 @@ create policy "officers can manage project tasks" on public.project_tasks
         and public.am_officer()
     )
   );
-
--- ── Seed data ────────────────────────────────────────────────────────────────
--- Replace vessel_id with a real vessel uuid before running
-
--- insert into public.projects (vessel_id, title, description, department, priority, status, due_date)
--- values
---   ('00000000-0000-0000-0000-000000000000', 'Annual Engine Survey Prep',
---    'Prepare documentation and spares list for annual classification survey.',
---    'engine', 'high', 'active', current_date + interval '30 days'),
---   ('00000000-0000-0000-0000-000000000000', 'Guest Charter Q3 Refit',
---    'Deep clean, soft furnishing refresh and tender maintenance ahead of charter season.',
---    null, 'medium', 'planning', current_date + interval '60 days');

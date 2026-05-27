@@ -1,6 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════
--- YachtOps — Checklists schema addendum
--- Run this AFTER the main schema.sql
+-- YachtOps — Checklists schema
+-- Run AFTER schema.sql
+-- Safe to re-run: all statements are idempotent.
 -- ═══════════════════════════════════════════════════════════════
 
 -- ── Checklist templates ───────────────────────────────────────────
@@ -60,69 +61,96 @@ create table if not exists public.checklist_step_results (
 );
 
 -- ── RLS ───────────────────────────────────────────────────────────
-alter table public.checklists            enable row level security;
-alter table public.checklist_sections    enable row level security;
-alter table public.checklist_steps       enable row level security;
-alter table public.checklist_runs        enable row level security;
+alter table public.checklists             enable row level security;
+alter table public.checklist_sections     enable row level security;
+alter table public.checklist_steps        enable row level security;
+alter table public.checklist_runs         enable row level security;
 alter table public.checklist_step_results enable row level security;
 
+drop policy if exists "vessel crew can read checklists" on public.checklists;
 create policy "vessel crew can read checklists" on public.checklists
   for select using (vessel_id = public.my_vessel_id());
 
+drop policy if exists "officers can manage checklists" on public.checklists;
 create policy "officers can manage checklists" on public.checklists
   for all using (vessel_id = public.my_vessel_id() and public.am_officer());
 
+drop policy if exists "vessel crew can read sections" on public.checklist_sections;
 create policy "vessel crew can read sections" on public.checklist_sections
   for select using (
     checklist_id in (select id from public.checklists where vessel_id = public.my_vessel_id())
   );
 
+drop policy if exists "officers can manage sections" on public.checklist_sections;
 create policy "officers can manage sections" on public.checklist_sections
   for all using (
     checklist_id in (select id from public.checklists where vessel_id = public.my_vessel_id() and public.am_officer())
   );
 
+drop policy if exists "vessel crew can read steps" on public.checklist_steps;
 create policy "vessel crew can read steps" on public.checklist_steps
   for select using (
     checklist_id in (select id from public.checklists where vessel_id = public.my_vessel_id())
   );
 
+drop policy if exists "officers can manage steps" on public.checklist_steps;
 create policy "officers can manage steps" on public.checklist_steps
   for all using (
     checklist_id in (select id from public.checklists where vessel_id = public.my_vessel_id() and public.am_officer())
   );
 
+drop policy if exists "vessel crew can read runs" on public.checklist_runs;
 create policy "vessel crew can read runs" on public.checklist_runs
   for select using (vessel_id = public.my_vessel_id());
 
+drop policy if exists "crew can create and update runs" on public.checklist_runs;
 create policy "crew can create and update runs" on public.checklist_runs
   for all using (vessel_id = public.my_vessel_id());
 
+drop policy if exists "vessel crew can read step results" on public.checklist_step_results;
 create policy "vessel crew can read step results" on public.checklist_step_results
   for select using (
     run_id in (select id from public.checklist_runs where vessel_id = public.my_vessel_id())
   );
 
+drop policy if exists "crew can manage step results" on public.checklist_step_results;
 create policy "crew can manage step results" on public.checklist_step_results
   for all using (
     run_id in (select id from public.checklist_runs where vessel_id = public.my_vessel_id())
   );
 
 -- ── Realtime ──────────────────────────────────────────────────────
-alter publication supabase_realtime add table public.checklist_runs;
-alter publication supabase_realtime add table public.checklist_step_results;
+do $$ begin
+  alter publication supabase_realtime add table public.checklist_runs;
+exception when duplicate_object then null;
+end $$;
 
--- ── Seed data: Tender daily check ────────────────────────────────
--- (replace 00000000-0000-0000-0000-000000000001 with your vessel id)
+do $$ begin
+  alter publication supabase_realtime add table public.checklist_step_results;
+exception when duplicate_object then null;
+end $$;
+
+-- ── Seed data: Tender daily check ─────────────────────────────────
+-- Skipped if the checklist already exists for this vessel.
 do $$
 declare
-  ck_id uuid := gen_random_uuid();
+  vid  uuid := '00000000-0000-0000-0000-000000000001';
+  ck_id uuid;
   sec1  uuid := gen_random_uuid();
   sec2  uuid := gen_random_uuid();
   sec3  uuid := gen_random_uuid();
 begin
+  if exists (
+    select 1 from public.checklists
+    where vessel_id = vid and title = 'Tender T1 — pre-use inspection'
+  ) then
+    return;
+  end if;
+
+  ck_id := gen_random_uuid();
+
   insert into public.checklists (id, vessel_id, department, frequency, title)
-  values (ck_id, '00000000-0000-0000-0000-000000000001', 'deck', 'daily', 'Tender T1 — pre-use inspection');
+  values (ck_id, vid, 'deck', 'daily', 'Tender T1 — pre-use inspection');
 
   insert into public.checklist_sections (id, checklist_id, title, position) values
     (sec1, ck_id, 'Visual + safety inspection', 0),

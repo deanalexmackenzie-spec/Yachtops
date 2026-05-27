@@ -1,6 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════
 -- YachtOps — Watch schema
 -- Run AFTER schema.sql
+-- Safe to re-run: all statements are idempotent.
 -- ═══════════════════════════════════════════════════════════════
 
 create table if not exists public.watch_slots (
@@ -17,8 +18,10 @@ create table if not exists public.watch_slots (
 
 alter table public.watch_slots enable row level security;
 
+drop policy if exists "vessel crew can read watch slots" on public.watch_slots;
 create policy "vessel crew can read watch slots" on public.watch_slots
   for select using (vessel_id = public.my_vessel_id());
 
+drop policy if exists "officers can manage watch slots" on public.watch_slots;
 create policy "officers can manage watch slots" on public.watch_slots
   for all using (vessel_id = public.my_vessel_id() and public.am_officer());
