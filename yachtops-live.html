@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YachtOps</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══ DESIGN TOKENS ═══ */
+:root {
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --surface-2: #f5f5f4;
+  --ink: #1c1917;
+  --ink-soft: #57534e;
+  --ink-mute: #a8a29e;
+  --rule: #e7e5e4;
+  --rule-strong: #d6d3d1;
+  --accent: #0c4a6e;
+  --accent-soft: #f0f9ff;
+  --done: #15803d;
+  --done-soft: #f0fdf4;
+  --warn: #c2410c;
+  --warn-soft: #fff7ed;
+  --alert: #b91c1c;
+  --alert-soft: #fef2f2;
+
+  --dept-deck: #0c4a6e;
+  --dept-deck-soft: #f0f9ff;
+  --dept-interior: #6b21a8;
+  --dept-interior-soft: #faf5ff;
+  --dept-engine: #991b1b;
+  --dept-engine-soft: #fef2f2;
+  --dept-galley: #854d0e;
+  --dept-galley-soft: #fefce8;
+  --dept-bridge: #1e3a8a;
+  --dept-bridge-soft: #eff6ff;
+  --dept-eto: #115e59;
+  --dept-eto-soft: #f0fdfa;
+
+  --shadow-sm: 0 1px 2px rgba(28,25,23,.04), 0 1px 3px rgba(28,25,23,.06);
+  --shadow-md: 0 2px 4px rgba(28,25,23,.04), 0 4px 12px -4px rgba(28,25,23,.08);
+  --shadow-lg: 0 4px 8px rgba(28,25,23,.04), 0 16px 32px -12px rgba(28,25,23,.12);
+}
+
+/* ═══ RESET + BASE ═══ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11','ss01','ss03','cv02';
+  letter-spacing: -0.005em;
+  min-height: 100vh;
+}
+h1, h2, h3 { letter-spacing: -0.02em; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: inherit; }
+a { color: var(--accent); text-decoration: none; }
+
+/* ═══ TYPOGRAPHY UTILS ═══ */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+}
+.mono { font-family: ui-monospace, 'Menlo', monospace; }
+
+/* ═══ LAYOUT ═══ */
+#app-root { max-width: 640px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ═══ AUTH SCREEN ═══ */
+#auth-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: linear-gradient(160deg, #1c1917 0%, #292524 45%, #0c4a6e 130%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+#auth-screen.hidden { display: none; }
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: white;
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 32px 80px -16px rgba(0,0,0,.5);
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.auth-logo {
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1c1917 0%, #0c4a6e 100%);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: var(--shadow-md);
+  flex-shrink: 0;
+}
+.auth-brand-text h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.auth-brand-text p { font-size: 12px; color: var(--ink-mute); margin-top: 2px; }
+
+.auth-toggle {
+  display: flex;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 24px;
+  gap: 4px;
+}
+.auth-toggle-btn {
+  flex: 1;
+  padding: 9px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  transition: all .15s ease;
+}
+.auth-toggle-btn.active {
+  background: white;
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-field { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-mute);
+  margin-bottom: 6px;
+}
+.form-input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 9px;
+  font-size: 14px;
+  outline: none;
+  transition: all .12s ease;
+  background: var(--surface);
+  color: var(--ink);
+}
+.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.form-hint { font-size: 11px; color: var(--ink-mute); margin-top: 5px; }
+.form-error { font-size: 12px; color: var(--alert); margin-top: 5px; font-weight: 500; }
+
+/* Department cards */
+.dept-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.dept-card {
+  padding: 14px;
+  border: 1.5px solid var(--rule);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .14s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dept-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.dept-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+.dept-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.dept-card-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+
+/* Vessel lookup */
+.vessel-lookup-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.vessel-lookup-row .form-input { flex: 1; text-transform: uppercase; letter-spacing: 0.1em; }
+.vessel-found {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--done-soft);
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--done);
+  margin-top: 6px;
+}
+.vessel-found.hidden { display: none; }
+
+/* Officer checkbox */
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-radius: 9px;
+  cursor: pointer;
+}
+.check-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.check-row-label { font-size: 13px; color: var(--ink-soft); font-weight: 500; }
+
+/* Submit button */
+.btn-submit {
+  width: 100%;
+  padding: 13px;
+  background: var(--ink);
+  color: white;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all .14s ease;
+  margin-top: 8px;
+}
+.btn-submit:hover { background: #292524; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.btn-submit.green { background: var(--done); }
+.btn-submit.green:hover { background: #166534; }
+
+/* ═══ MAIN APP ═══ */
+#main-app { display: flex; flex-direction: column; flex: 1; }
+#main-app.hidden { display: none; }
+
+/* Header */
+.app-header {
+  background: white;
+  border-bottom: 1px solid var(--rule);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+.header-logo {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dept-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.dept-badge-dot { width: 8px; height: 8px; border-radius: 50%; }
+.btn-signout {
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  border: 1px solid var(--rule);
+  transition: all .12s ease;
+}
+.btn-signout:hover { color: var(--ink); background: var(--surface-2); }
+
+/* Sub-tabs */
+.sub-tabs {
+  background: white;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  overflow-x: auto;
+  padding: 0 16px;
+}
+.sub-tab {
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.sub-tab:hover { color: var(--ink-soft); }
+.sub-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+/* Content area */
+.tab-content { padding: 16px; flex: 1; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ═══ WORKLIST TAB ═══ */
+.worklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.worklist-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.badge-draft { background: var(--warn-soft); color: var(--warn); }
+.badge-published { background: var(--done-soft); color: var(--done); }
+.badge-count { background: var(--surface-2); color: var(--ink-soft); font-weight: 600; }
+.worklist-actions { display: flex; align-items: center; gap: 8px; }
+
+.btn-sm {
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .12s ease;
+  border: 1px solid transparent;
+}
+.btn-outline {
+  background: white;
+  border-color: var(--rule-strong);
+  color: var(--ink-soft);
+}
+.btn-outline:hover { border-color: var(--ink-soft); color: var(--ink); }
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: #0e3f5c; }
+.btn-danger { background: var(--alert-soft); color: var(--alert); border-color: #fecaca; }
+.btn-danger:hover { background: #fee2e2; }
+
+/* Morning note card */
+.morning-card {
+  margin-bottom: 12px;
+  padding: 14px 16px;
+}
+.morning-card .eyebrow { margin-bottom: 8px; }
+.morning-note-text { font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
+.morning-note-empty { font-size: 13px; color: var(--ink-mute); font-style: italic; }
+.morning-edit-area { margin-top: 8px; }
+.morning-edit-area textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 72px;
+  outline: none;
+  color: var(--ink);
+}
+.morning-edit-area textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.morning-actions { display: flex; gap: 8px; margin-top: 8px; }
+
+/* Unpublished placeholder */
+.unpublished-placeholder {
+  text-align: center;
+  padding: 40px 24px;
+}
+.unpublished-placeholder h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--ink-soft); }
+.unpublished-placeholder p { font-size: 13px; color: var(--ink-mute); }
+
+/* Section header */
+.section-header {
+  padding: 10px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+.section-count { font-size: 11px; color: var(--ink-mute); font-weight: 600; }
+
+/* Job row */
+.job-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+  transition: background .12s ease;
+  cursor: pointer;
+}
+.job-row:last-child { border-bottom: none; }
+.job-row:hover { background: var(--surface-2); }
+.job-row.is-done { opacity: .6; }
+
+.job-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--rule-strong);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all .12s ease;
+}
+.job-check:hover { border-color: var(--done); }
+.job-check.checked { background: var(--done); border-color: var(--done); }
+.job-check svg { display: none; }
+.job-check.checked svg { display: block; }
+
+.job-body { flex: 1; min-width: 0; }
+.job-title { font-size: 14px; font-weight: 500; color: var(--ink); line-height: 1.4; }
+.job-row.is-done .job-title { text-decoration: line-through; text-decoration-color: var(--ink-mute); color: var(--ink-soft); }
+.job-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.job-assignee { font-size: 11px; color: var(--ink-mute); }
+.job-done-by { font-size: 11px; color: var(--done); font-weight: 500; }
+.job-done-time { font-size: 11px; color: var(--ink-mute); font-family: ui-monospace, monospace; }
+.priority-flag { font-size: 11px; color: var(--warn); }
+
+/* Add section row */
+.add-section-row {
+  padding: 10px 16px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.add-section-row input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 7px;
+  font-size: 13px;
+  outline: none;
+}
+.add-section-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* ═══ CALENDAR TAB ═══ */
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.cal-date-group { margin-bottom: 16px; }
+.cal-date-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+.cal-event-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.cal-event-card:last-child { border-bottom: none; }
+.cal-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.cal-event-body { flex: 1; min-width: 0; }
+.cal-event-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.cal-event-notes { font-size: 12px; color: var(--ink-mute); margin-top: 2px; }
+.cal-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.empty-state {
+  text-align: center;
+  padding: 40px 16px;
+}
+.empty-state p { font-size: 14px; color: var(--ink-mute); line-height: 1.6; }
+
+/* ═══ NOTES TAB ═══ */
+.notes-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.notes-section-title { font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+.notes-card {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.notes-card:last-child { border-bottom: none; }
+.notes-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.notes-card-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.notes-card-time { font-size: 11px; color: var(--ink-mute); font-family: ui-monospace, monospace; flex-shrink: 0; }
+.notes-card-body { font-size: 13px; color: var(--ink-soft); margin-top: 4px; line-height: 1.6; }
+.notes-card-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.notes-action-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  padding: 3px 8px;
+  border-radius: 5px;
+  transition: all .12s ease;
+}
+.notes-action-btn:hover { background: var(--surface-2); color: var(--ink); }
+.notes-action-btn.danger:hover { background: var(--alert-soft); color: var(--alert); }
+.shared-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-top: 6px;
+}
+
+/* ═══ MODALS ═══ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(28,25,23,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.hidden { display: none; }
+.modal-card {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.modal-header {
+  padding: 20px 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.modal-close {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-mute);
+  font-size: 18px;
+  transition: all .12s ease;
+}
+.modal-close:hover { background: var(--surface-2); color: var(--ink); }
+.modal-body { padding: 16px 20px 20px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; padding: 0 20px 20px; }
+
+/* Avatar grid */
+.avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.avatar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 2px solid var(--rule);
+  cursor: pointer;
+  transition: all .12s ease;
+  min-width: 60px;
+}
+.avatar-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.avatar-btn.selected { border-color: var(--accent); background: var(--accent-soft); }
+.avatar-circle {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+}
+.avatar-name { font-size: 11px; font-weight: 500; color: var(--ink-soft); }
+
+/* Assign scroll */
+.assign-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-top: 6px;
+}
+.assign-scroll::-webkit-scrollbar { height: 0; }
+.assign-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 2px solid var(--rule);
+  cursor: pointer;
+  transition: all .12s ease;
+  flex-shrink: 0;
+  min-width: 56px;
+}
+.assign-btn:hover { border-color: var(--accent); }
+.assign-btn.selected { border-color: var(--accent); background: var(--accent-soft); }
+.assign-btn .avatar-circle { width: 32px; height: 32px; font-size: 12px; }
+.assign-btn .avatar-name { font-size: 10px; }
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+.spinner.dark {
+  border-color: rgba(28,25,23,.15);
+  border-top-color: var(--ink-soft);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 16px;
+}
+.loading-state p { font-size: 13px; color: var(--ink-mute); }
+
+/* ─── toggle switch ─── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+.toggle-label { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+.toggle-switch { position: relative; width: 40px; height: 22px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 99px;
+  background: var(--rule-strong);
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: white;
+  top: 3px; left: 3px;
+  transition: transform .15s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle-switch input:checked + .toggle-track { background: var(--done); }
+.toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
+</style>
+</head>
+<body>
+
+<!-- ═══ AUTH SCREEN ═══ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo">⚓</div>
+      <div class="auth-brand-text">
+        <h1>YachtOps</h1>
+        <p>Superyacht crew operations</p>
+      </div>
+    </div>
+
+    <div class="auth-toggle">
+      <button class="auth-toggle-btn active" id="tab-signin" onclick="setAuthMode('signin')">Sign In</button>
+      <button class="auth-toggle-btn" id="tab-signup" onclick="setAuthMode('signup')">Sign Up</button>
+    </div>
+
+    <div id="auth-error" style="display:none;padding:10px 12px;background:var(--alert-soft);border:1px solid #fecaca;border-radius:8px;font-size:13px;color:var(--alert);margin-bottom:12px;"></div>
+
+    <!-- SIGN IN FORM -->
+    <div id="signin-form">
+      <div class="form-field">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="si-email" placeholder="crew@vessel.com" autocomplete="email">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="si-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-submit" id="signin-btn" onclick="doSignIn()">
+        <span id="signin-btn-text">Sign In</span>
+      </button>
+    </div>
+
+    <!-- SIGN UP FORM -->
+    <div id="signup-form" style="display:none;">
+      <div class="form-field">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-input" id="su-name" placeholder="Alex Mackenzie" autocomplete="name">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="su-email" placeholder="crew@vessel.com" autocomplete="email">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="su-password" placeholder="Min. 8 characters" autocomplete="new-password">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Role / Title</label>
+        <input type="text" class="form-input" id="su-role" placeholder="e.g. Bosun, Stewardess, Chef">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Department</label>
+        <div class="dept-grid" id="dept-grid">
+          <button class="dept-card" data-dept="deck" onclick="selectDept('deck')">
+            <div class="dept-dot" style="background:var(--dept-deck)"></div>
+            <span class="dept-card-label">Deck</span>
+          </button>
+          <button class="dept-card" data-dept="interior" onclick="selectDept('interior')">
+            <div class="dept-dot" style="background:var(--dept-interior)"></div>
+            <span class="dept-card-label">Interior</span>
+          </button>
+          <button class="dept-card" data-dept="engine" onclick="selectDept('engine')">
+            <div class="dept-dot" style="background:var(--dept-engine)"></div>
+            <span class="dept-card-label">Engineering</span>
+          </button>
+          <button class="dept-card" data-dept="galley" onclick="selectDept('galley')">
+            <div class="dept-dot" style="background:var(--dept-galley)"></div>
+            <span class="dept-card-label">Galley</span>
+          </button>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Vessel Join Code</label>
+        <div class="vessel-lookup-row">
+          <input type="text" class="form-input" id="su-joincode" placeholder="ABC123" maxlength="6"
+            oninput="onJoinCodeInput()" style="text-transform:uppercase;letter-spacing:.1em;">
+        </div>
+        <div class="vessel-found hidden" id="vessel-found">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="vessel-name-text"></span>
+        </div>
+        <div class="form-error" id="vessel-error" style="display:none;"></div>
+        <p class="form-hint">6-character code from your vessel manager</p>
+      </div>
+      <div class="form-field">
+        <label class="check-row">
+          <input type="checkbox" id="su-officer">
+          <span class="check-row-label">I'm a department head or officer</span>
+        </label>
+      </div>
+      <button class="btn-submit" id="signup-btn" onclick="doSignUp()">
+        <span id="signup-btn-text">Create Account</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div id="main-app" class="hidden">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-logo">⚓ YachtOps</div>
+    <div class="header-right">
+      <div class="dept-badge" id="header-dept-badge">
+        <div class="dept-badge-dot" id="header-dept-dot"></div>
+        <span id="header-dept-name">Deck</span>
+        <span style="color:var(--ink-mute);font-weight:400;margin-left:4px;" id="header-user-name"></span>
+      </div>
+      <button class="btn-signout" onclick="doSignOut()">Sign out</button>
+    </div>
+  </header>
+
+  <!-- Sub-tabs -->
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-tab="worklist" onclick="switchTab('worklist')">Worklist</button>
+    <button class="sub-tab" data-tab="calendar" onclick="switchTab('calendar')">Calendar</button>
+    <button class="sub-tab" data-tab="notes" onclick="switchTab('notes')">Notes</button>
+  </div>
+
+  <!-- Content -->
+  <div class="tab-content">
+
+    <!-- WORKLIST TAB -->
+    <div class="tab-pane active" id="tab-worklist">
+      <div id="worklist-loading" class="loading-state">
+        <div class="spinner dark"></div>
+        <p>Loading worklist…</p>
+      </div>
+      <div id="worklist-content" style="display:none;"></div>
+    </div>
+
+    <!-- CALENDAR TAB -->
+    <div class="tab-pane" id="tab-calendar">
+      <div id="calendar-loading" class="loading-state">
+        <div class="spinner dark"></div>
+        <p>Loading calendar…</p>
+      </div>
+      <div id="calendar-content" style="display:none;"></div>
+    </div>
+
+    <!-- NOTES TAB -->
+    <div class="tab-pane" id="tab-notes">
+      <div id="notes-loading" class="loading-state">
+        <div class="spinner dark"></div>
+        <p>Loading notes…</p>
+      </div>
+      <div id="notes-content" style="display:none;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Sign-off Modal -->
+<div class="modal-overlay hidden" id="signoff-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Sign off completed</div>
+      <button class="modal-close" onclick="closeModal('signoff-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="signoff-job-title" style="font-size:14px;color:var(--ink-soft);margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--rule);"></p>
+      <div class="form-label" style="margin-bottom:8px;">Completed by</div>
+      <div class="avatar-grid" id="signoff-crew-grid"></div>
+      <div class="form-field" style="margin-top:16px;">
+        <label class="form-label">Note (optional)</label>
+        <textarea class="form-input" id="signoff-note" rows="2" placeholder="Any notes about completion…" style="resize:none;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeModal('signoff-modal')">Cancel</button>
+      <button class="btn-sm btn-submit green" style="margin-top:0;width:auto;padding:8px 16px;" id="signoff-confirm-btn" onclick="confirmSignoff()">Mark complete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Job Modal -->
+<div class="modal-overlay hidden" id="addjob-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Add Job</div>
+      <button class="modal-close" onclick="closeModal('addjob-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">Job title *</label>
+        <input type="text" class="form-input" id="aj-title" placeholder="e.g. Check anchor chain">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-input" id="aj-notes" rows="2" placeholder="Additional details…" style="resize:none;"></textarea>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Assign to</label>
+        <div class="assign-scroll" id="aj-assignees">
+          <!-- populated dynamically -->
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Section</label>
+        <div style="position:relative;">
+          <select class="form-input" id="aj-section" style="appearance:none;padding-right:32px;cursor:pointer;">
+            <option value="">No section</option>
+          </select>
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-mute);font-size:12px;">▾</span>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Mark as priority</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="aj-priority">
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeModal('addjob-modal')">Cancel</button>
+      <button class="btn-sm btn-primary" id="addjob-btn" onclick="confirmAddJob()">Add Job</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Event Modal -->
+<div class="modal-overlay hidden" id="addevent-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Add Event</div>
+      <button class="modal-close" onclick="closeModal('addevent-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">Title *</label>
+        <input type="text" class="form-input" id="ae-title" placeholder="e.g. Fire drill">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Date *</label>
+        <input type="date" class="form-input" id="ae-date">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Type</label>
+        <div style="position:relative;">
+          <select class="form-input" id="ae-type" style="appearance:none;padding-right:32px;cursor:pointer;">
+            <option value="drill">Drill</option>
+            <option value="delivery">Delivery</option>
+            <option value="owner">Owner onboard</option>
+            <option value="charter">Charter guests</option>
+            <option value="contractor">Contractor visit</option>
+            <option value="survey">Survey</option>
+            <option value="other">Other</option>
+          </select>
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-mute);font-size:12px;">▾</span>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-input" id="ae-notes" rows="2" placeholder="Additional details…" style="resize:none;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeModal('addevent-modal')">Cancel</button>
+      <button class="btn-sm btn-primary" id="addevent-btn" onclick="confirmAddEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Note Modal -->
+<div class="modal-overlay hidden" id="addnote-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Add Note</div>
+      <button class="modal-close" onclick="closeModal('addnote-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">Title *</label>
+        <input type="text" class="form-input" id="an-title" placeholder="e.g. Call marina about berth">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Body</label>
+        <textarea class="form-input" id="an-body" rows="3" placeholder="Details…" style="resize:none;"></textarea>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Share with all officers</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="an-shared">
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeModal('addnote-modal')">Cancel</button>
+      <button class="btn-sm btn-primary" id="addnote-btn" onclick="confirmAddNote()">Save Note</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG — replace with your actual Supabase project values
+// ═══════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://your-project-ref.supabase.co';
+const SUPABASE_ANON_KEY = 'your-anon-key-here';
+// ═══════════════════════════════════════════════════════════
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─── App state ───
+const state = {
+  session: null,
+  profile: null,
+  worklist: null,
+  sections: [],
+  jobs: [],
+  events: [],
+  reminders: [],
+  activeTab: 'worklist',
+  // signoff
+  signoffJobId: null,
+  signoffAssigneeId: null,
+  // addjob
+  addJobAssigneeId: null,
+  addJobPrefillTitle: null,
+  // vessel lookup
+  vesselId: null,
+  // dept crews cache
+  deptCrew: [],
+  // realtime channels
+  channels: [],
+};
+
+// ─── Dept helpers ───
+const DEPT_COLOR = {
+  deck:     '#0c4a6e',
+  interior: '#6b21a8',
+  engine:   '#991b1b',
+  galley:   '#854d0e',
+  bridge:   '#1e3a8a',
+  eto:      '#115e59',
+};
+const DEPT_SOFT = {
+  deck:     '#f0f9ff',
+  interior: '#faf5ff',
+  engine:   '#fef2f2',
+  galley:   '#fefce8',
+  bridge:   '#eff6ff',
+  eto:      '#f0fdfa',
+};
+function deptColor(dept) { return DEPT_COLOR[dept] || '#a8a29e'; }
+function deptSoft(dept) { return DEPT_SOFT[dept] || '#f5f5f4'; }
+
+const EVENT_TYPE_COLOR = {
+  drill:       '#b91c1c',
+  delivery:    '#d97706',
+  owner:       '#1e3a8a',
+  charter:     '#0c4a6e',
+  contractor:  '#6b21a8',
+  survey:      '#115e59',
+  other:       '#a8a29e',
+};
+const EVENT_TYPE_SOFT = {
+  drill:       '#fef2f2',
+  delivery:    '#fffbeb',
+  owner:       '#eff6ff',
+  charter:     '#f0f9ff',
+  contractor:  '#faf5ff',
+  survey:      '#f0fdfa',
+  other:       '#f5f5f4',
+};
+const EVENT_TYPE_LABEL = {
+  drill:       'DRILL',
+  delivery:    'DELIVERY',
+  owner:       'OWNER',
+  charter:     'CHARTER',
+  contractor:  'CONTRACTOR',
+  survey:      'SURVEY',
+  other:       'OTHER',
+};
+
+// ─── Date helpers ───
+function todayISO() {
+  return new Date().toISOString().slice(0,10);
+}
+function fmtDateLong(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+}
+function fmtDateShort(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+}
+function fmtTime(isoTs) {
+  if (!isoTs) return '';
+  const d = new Date(isoTs);
+  return d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+}
+function fmtTimestamp(isoTs) {
+  if (!isoTs) return '';
+  const d = new Date(isoTs);
+  const today = new Date();
+  if (d.toDateString() === today.toDateString()) {
+    return d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  }
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+}
+
+// ─── initials helper ───
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+}
+
+// ─── Is HOD? (is_officer = true) ───
+function isHOD() { return state.profile?.is_officer === true; }
+
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+
+let selectedDept = null;
+let vesselLookupTimer = null;
+
+function setAuthMode(mode) {
+  document.getElementById('tab-signin').classList.toggle('active', mode === 'signin');
+  document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+  document.getElementById('signin-form').style.display = mode === 'signin' ? '' : 'none';
+  document.getElementById('signup-form').style.display = mode === 'signup' ? '' : 'none';
+  clearAuthError();
+}
+
+function selectDept(dept) {
+  selectedDept = dept;
+  document.querySelectorAll('.dept-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.dept === dept);
+  });
+}
+
+function clearAuthError() {
+  const el = document.getElementById('auth-error');
+  el.style.display = 'none';
+  el.textContent = '';
+}
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = '';
+}
+
+function onJoinCodeInput() {
+  const code = document.getElementById('su-joincode').value.trim().toUpperCase();
+  const found = document.getElementById('vessel-found');
+  const err = document.getElementById('vessel-error');
+  found.classList.add('hidden');
+  err.style.display = 'none';
+  state.vesselId = null;
+
+  if (code.length < 6) return;
+
+  clearTimeout(vesselLookupTimer);
+  vesselLookupTimer = setTimeout(async () => {
+    const { data, error } = await db.rpc('vessel_by_join_code', { code });
+    if (error || !data || (Array.isArray(data) && data.length === 0)) {
+      err.textContent = 'Join code not found. Check with your vessel manager.';
+      err.style.display = '';
+      return;
+    }
+    const vessel = Array.isArray(data) ? data[0] : data;
+    state.vesselId = vessel.id;
+    document.getElementById('vessel-name-text').textContent =
+      (vessel.vessel_flag ? vessel.vessel_flag + ' ' : '') + vessel.vessel_name;
+    found.classList.remove('hidden');
+  }, 500);
+}
+
+async function doSignIn() {
+  clearAuthError();
+  const email    = document.getElementById('si-email').value.trim();
+  const password = document.getElementById('si-password').value;
+  if (!email || !password) { showAuthError('Please enter your email and password.'); return; }
+
+  const btn = document.getElementById('signin-btn');
+  btn.disabled = true;
+  document.getElementById('signin-btn-text').innerHTML = '<span class="spinner"></span>';
+
+  const { error } = await db.auth.signInWithPassword({ email, password });
+  btn.disabled = false;
+  document.getElementById('signin-btn-text').textContent = 'Sign In';
+
+  if (error) { showAuthError(error.message); }
+  // onAuthStateChange handles the rest
+}
+
+async function doSignUp() {
+  clearAuthError();
+  const name     = document.getElementById('su-name').value.trim();
+  const email    = document.getElementById('su-email').value.trim();
+  const password = document.getElementById('su-password').value;
+  const role     = document.getElementById('su-role').value.trim();
+  const officer  = document.getElementById('su-officer').checked;
+
+  if (!name)         { showAuthError('Please enter your full name.'); return; }
+  if (!email)        { showAuthError('Please enter your email.'); return; }
+  if (password.length < 8) { showAuthError('Password must be at least 8 characters.'); return; }
+  if (!selectedDept) { showAuthError('Please select a department.'); return; }
+  if (!state.vesselId) { showAuthError('Please enter a valid vessel join code.'); return; }
+
+  const btn = document.getElementById('signup-btn');
+  btn.disabled = true;
+  document.getElementById('signup-btn-text').innerHTML = '<span class="spinner"></span>';
+
+  const initStr = initials(name);
+  const color   = deptColor(selectedDept);
+
+  const { data: signUpData, error: signUpErr } = await db.auth.signUp({ email, password });
+  btn.disabled = false;
+  document.getElementById('signup-btn-text').textContent = 'Create Account';
+
+  if (signUpErr) { showAuthError(signUpErr.message); return; }
+
+  const userId = signUpData.user?.id;
+  if (!userId) { showAuthError('Sign up succeeded but no user ID returned. Try signing in.'); return; }
+
+  // Create profile
+  const { error: profErr } = await db.from('profiles').insert({
+    id:          userId,
+    vessel_id:   state.vesselId,
+    full_name:   name,
+    role:        role || selectedDept,
+    initials:    initStr,
+    department:  selectedDept,
+    is_officer:  officer,
+    color:       color,
+  });
+
+  if (profErr) { showAuthError('Account created but profile save failed: ' + profErr.message); return; }
+  // onAuthStateChange will pick up the new session
+}
+
+// ═══════════════════════════════════════
+// BOOT / AUTH STATE
+// ═══════════════════════════════════════
+
+db.auth.onAuthStateChange(async (event, session) => {
+  state.session = session;
+  if (session) {
+    await loadProfile();
+    if (state.profile) {
+      showApp();
+      await loadActiveTab();
+      subscribeRealtime();
+    } else {
+      // Profile missing — route to sign up
+      showAuth();
+      setAuthMode('signup');
+      showAuthError('No profile found for this account. Please create one.');
+    }
+  } else {
+    unsubscribeRealtime();
+    showAuth();
+  }
+});
+
+async function loadProfile() {
+  const uid = state.session.user.id;
+  const { data, error } = await db
+    .from('profiles')
+    .select('*')
+    .eq('id', uid)
+    .single();
+  if (error || !data) { state.profile = null; return; }
+  state.profile = data;
+}
+
+function showAuth() {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('main-app').classList.add('hidden');
+}
+
+function showApp() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+  renderHeader();
+}
+
+function renderHeader() {
+  const p = state.profile;
+  if (!p) return;
+  const color = deptColor(p.department);
+  document.getElementById('header-dept-dot').style.background = color;
+  document.getElementById('header-dept-name').textContent =
+    p.department.charAt(0).toUpperCase() + p.department.slice(1);
+  document.getElementById('header-user-name').textContent = '· ' + (p.full_name || p.initials);
+}
+
+async function doSignOut() {
+  await db.auth.signOut();
+}
+
+// ═══════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════
+
+function switchTab(tab) {
+  state.activeTab = tab;
+  document.querySelectorAll('.sub-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  document.querySelectorAll('.tab-pane').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-' + tab);
+  });
+  loadActiveTab();
+}
+
+async function loadActiveTab() {
+  if (state.activeTab === 'worklist') await loadWorklist();
+  if (state.activeTab === 'calendar') await loadCalendar();
+  if (state.activeTab === 'notes')    await loadNotes();
+}
+
+// ═══════════════════════════════════════
+// WORKLIST TAB
+// ═══════════════════════════════════════
+
+async function loadWorklist() {
+  showLoading('worklist');
+
+  const today = todayISO();
+  const dept  = state.profile.department;
+  const vid   = state.profile.vessel_id;
+
+  // Fetch or create worklist row for today+dept
+  let { data: wl, error: wlErr } = await db
+    .from('worklists')
+    .select('*')
+    .eq('vessel_id', vid)
+    .eq('department', dept)
+    .eq('date', today)
+    .maybeSingle();
+
+  if (wlErr) { showError('worklist', wlErr.message); return; }
+  state.worklist = wl || null;
+
+  if (state.worklist) {
+    // Fetch sections and jobs
+    const [secRes, jobRes] = await Promise.all([
+      db.from('worklist_sections').select('*').eq('worklist_id', state.worklist.id).order('position'),
+      db.from('worklist_jobs').select('*, assignee:profiles!worklist_jobs_assignee_id_fkey(full_name,initials,color), completer:profiles!worklist_jobs_completed_by_fkey(full_name,initials)').eq('worklist_id', state.worklist.id).order('position'),
+    ]);
+    state.sections = secRes.data || [];
+    state.jobs     = jobRes.data || [];
+  } else {
+    state.sections = [];
+    state.jobs = [];
+  }
+
+  // Fetch dept crew for signoff modal
+  const { data: crew } = await db
+    .from('profiles')
+    .select('*')
+    .eq('vessel_id', vid)
+    .eq('department', dept);
+  state.deptCrew = crew || [];
+
+  renderWorklist();
+  hideLoading('worklist');
+}
+
+function renderWorklist() {
+  const container = document.getElementById('worklist-content');
+  const today = todayISO();
+  const wl = state.worklist;
+  const hod = isHOD();
+  const published = !!wl?.published_at;
+
+  let html = '';
+
+  // Header row
+  const totalJobs = state.jobs.length;
+  const doneJobs  = state.jobs.filter(j => j.completed_at).length;
+
+  html += `<div class="worklist-header">
+    <div class="worklist-meta">
+      <span class="badge badge-count">${totalJobs} job${totalJobs !== 1 ? 's' : ''}</span>
+      <span class="badge badge-count" style="color:var(--done)">${doneJobs} done</span>
+      ${published
+        ? '<span class="badge badge-published">Published</span>'
+        : '<span class="badge badge-draft">Draft</span>'}
+    </div>
+    <div class="worklist-actions">`;
+
+  if (hod) {
+    html += `<button class="btn-sm btn-outline" onclick="openAddJobModal()">+ Add job</button>`;
+    if (!published && wl) {
+      html += `<button class="btn-sm btn-primary" onclick="publishWorklist()">Send to crew</button>`;
+    }
+  }
+
+  html += `</div></div>`;
+
+  // Morning note
+  const showNote = hod || (wl?.morning_note);
+  if (showNote) {
+    html += `<div class="card morning-card">
+      <div class="eyebrow">${fmtDateLong(today)}</div>
+      <div id="morning-display">
+        ${wl?.morning_note
+          ? `<p class="morning-note-text">${escHtml(wl.morning_note)}</p>`
+          : `<p class="morning-note-empty">No morning note yet.</p>`}
+        ${hod ? `<button class="btn-sm btn-outline" style="margin-top:10px;" onclick="editMorningNote()">Edit</button>` : ''}
+      </div>
+      <div id="morning-edit" class="morning-edit-area" style="display:none;">
+        <textarea id="morning-textarea" rows="3">${escHtml(wl?.morning_note || '')}</textarea>
+        <div class="morning-actions">
+          <button class="btn-sm btn-primary" onclick="saveMorningNote()">Save</button>
+          <button class="btn-sm btn-outline" onclick="cancelMorningNote()">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Crew unpublished placeholder
+  if (!hod && !published) {
+    html += `<div class="card">
+      <div class="unpublished-placeholder">
+        <h3>Worklist not yet published</h3>
+        <p>Your Bosun is building today's list — check back soon.</p>
+      </div>
+    </div>`;
+    container.innerHTML = html;
+    return;
+  }
+
+  // Job list
+  if (hod || published) {
+    // Group by section
+    const noSection = state.sections.length === 0 || true; // always show ungrouped fallback
+
+    // Build section→jobs map
+    const sectionMap = {};
+    sectionMap['__none__'] = [];
+    state.sections.forEach(s => { sectionMap[s.id] = []; });
+    state.jobs.forEach(j => {
+      const key = j.section_id || '__none__';
+      if (sectionMap[key]) sectionMap[key].push(j);
+      else sectionMap['__none__'].push(j);
+    });
+
+    html += `<div class="card" id="jobs-card">`;
+
+    if (state.sections.length === 0 && state.jobs.length === 0) {
+      html += `<div style="padding:32px 16px;text-align:center;color:var(--ink-mute);font-size:14px;">
+        ${hod ? 'No jobs yet — add the first one.' : 'No jobs yet today.'}
+      </div>`;
+    } else {
+      // Render unsectioned jobs first
+      if (sectionMap['__none__'].length > 0) {
+        sectionMap['__none__'].forEach(j => { html += renderJobRow(j); });
+      }
+
+      // Render each section
+      state.sections.forEach(sec => {
+        const sJobs = sectionMap[sec.id] || [];
+        const sDone = sJobs.filter(j => j.completed_at).length;
+        html += `<div class="section-header">
+          <span class="section-label">${escHtml(sec.label)}</span>
+          <span class="section-count">${sDone}/${sJobs.length}</span>
+        </div>`;
+        if (sJobs.length === 0) {
+          html += `<div style="padding:12px 16px;font-size:13px;color:var(--ink-mute);">No jobs in this section.</div>`;
+        } else {
+          sJobs.forEach(j => { html += renderJobRow(j); });
+        }
+      });
+    }
+
+    // Add section input (HOD, pre-publish)
+    if (hod && !published) {
+      html += `<div class="add-section-row">
+        <input type="text" id="new-section-input" placeholder="Add section (e.g. Before 10am)…" onkeydown="onSectionKeydown(event)">
+        <button class="btn-sm btn-outline" onclick="addSection()">Add</button>
+      </div>`;
+    }
+
+    html += `</div>`; // jobs-card
+  }
+
+  container.innerHTML = html;
+}
+
+function renderJobRow(j) {
+  const done = !!j.completed_at;
+  const assigneeName = j.assignee?.full_name || 'Anyone';
+  const completerName = j.completer?.full_name || '';
+  const time = fmtTime(j.completed_at);
+  const hod = isHOD();
+
+  return `<div class="job-row ${done ? 'is-done' : ''}" onclick="onJobRowClick('${j.id}')">
+    <div class="job-check ${done ? 'checked' : ''}">
+      <svg width="12" height="12" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="job-body">
+      <div class="job-title">${escHtml(j.title)}</div>
+      <div class="job-meta">
+        ${done
+          ? `<span class="job-done-by">✓ ${escHtml(completerName)}</span><span class="job-done-time mono">${time}</span>`
+          : `<span class="job-assignee">${j.assignee_id ? escHtml(assigneeName) : 'Open · anyone'}</span>`}
+        ${j.is_priority && hod ? '<span class="priority-flag">▲ Priority</span>' : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function onJobRowClick(jobId) {
+  const job = state.jobs.find(j => j.id === jobId);
+  if (!job) return;
+  if (job.completed_at) return; // already done, ignore
+  openSignoffModal(job);
+}
+
+// Morning note
+function editMorningNote() {
+  document.getElementById('morning-display').style.display = 'none';
+  document.getElementById('morning-edit').style.display = '';
+  document.getElementById('morning-textarea').focus();
+}
+function cancelMorningNote() {
+  document.getElementById('morning-display').style.display = '';
+  document.getElementById('morning-edit').style.display = 'none';
+}
+async function saveMorningNote() {
+  const note = document.getElementById('morning-textarea').value;
+  const vid  = state.profile.vessel_id;
+  const dept = state.profile.department;
+  const today = todayISO();
+
+  if (!state.worklist) {
+    // Create worklist row
+    const { data, error } = await db.from('worklists').insert({
+      vessel_id:    vid,
+      department:   dept,
+      date:         today,
+      morning_note: note,
+      created_by:   state.session.user.id,
+    }).select().single();
+    if (error) { alert('Error: ' + error.message); return; }
+    state.worklist = data;
+  } else {
+    const { error } = await db.from('worklists')
+      .update({ morning_note: note })
+      .eq('id', state.worklist.id);
+    if (error) { alert('Error: ' + error.message); return; }
+    state.worklist.morning_note = note;
+  }
+  cancelMorningNote();
+  renderWorklist();
+}
+
+async function publishWorklist() {
+  if (!state.worklist) { alert('No worklist to publish yet.'); return; }
+  const { error } = await db.from('worklists').update({
+    published_at: new Date().toISOString(),
+    published_by: state.session.user.id,
+  }).eq('id', state.worklist.id);
+  if (error) { alert('Error: ' + error.message); return; }
+  state.worklist.published_at = new Date().toISOString();
+  renderWorklist();
+}
+
+// Add section
+function onSectionKeydown(e) {
+  if (e.key === 'Enter') addSection();
+}
+async function addSection() {
+  const input = document.getElementById('new-section-input');
+  if (!input) return;
+  const label = input.value.trim();
+  if (!label) return;
+
+  if (!state.worklist) {
+    await ensureWorklist();
+  }
+  const pos = state.sections.length;
+  const { data, error } = await db.from('worklist_sections').insert({
+    worklist_id: state.worklist.id,
+    label,
+    position: pos,
+  }).select().single();
+  if (error) { alert('Error: ' + error.message); return; }
+  state.sections.push(data);
+  input.value = '';
+  renderWorklist();
+}
+
+async function ensureWorklist() {
+  if (state.worklist) return;
+  const vid  = state.profile.vessel_id;
+  const dept = state.profile.department;
+  const today = todayISO();
+  const { data, error } = await db.from('worklists').insert({
+    vessel_id:  vid,
+    department: dept,
+    date:       today,
+    created_by: state.session.user.id,
+  }).select().single();
+  if (error) throw error;
+  state.worklist = data;
+}
+
+// ─── Sign-off modal ───
+function openSignoffModal(job) {
+  state.signoffJobId     = job.id;
+  state.signoffAssigneeId = null;
+
+  document.getElementById('signoff-job-title').textContent = job.title;
+  document.getElementById('signoff-note').value = '';
+
+  // Populate crew grid
+  const grid = document.getElementById('signoff-crew-grid');
+  grid.innerHTML = state.deptCrew.map(p => `
+    <button class="avatar-btn" id="av-${p.id}" onclick="selectSignoffCrew('${p.id}')">
+      <div class="avatar-circle" style="background:${p.color || deptColor(p.department)};">${escHtml(p.initials || initials(p.full_name))}</div>
+      <span class="avatar-name">${escHtml(p.full_name ? p.full_name.split(' ')[0] : p.initials)}</span>
+    </button>
+  `).join('');
+
+  openModal('signoff-modal');
+}
+function selectSignoffCrew(id) {
+  state.signoffAssigneeId = id;
+  document.querySelectorAll('#signoff-crew-grid .avatar-btn').forEach(b => {
+    b.classList.toggle('selected', b.id === 'av-' + id);
+  });
+}
+async function confirmSignoff() {
+  if (!state.signoffAssigneeId) { alert('Please select who completed this job.'); return; }
+  const note = document.getElementById('signoff-note').value.trim();
+  const btn  = document.getElementById('signoff-confirm-btn');
+  btn.disabled = true;
+  const { error } = await db.from('worklist_jobs').update({
+    completed_at:    new Date().toISOString(),
+    completed_by:    state.signoffAssigneeId,
+    completed_note:  note || null,
+  }).eq('id', state.signoffJobId);
+  btn.disabled = false;
+  if (error) { alert('Error: ' + error.message); return; }
+  closeModal('signoff-modal');
+  await loadWorklist();
+}
+
+// ─── Add job modal ───
+async function openAddJobModal(prefillTitle) {
+  state.addJobAssigneeId = null;
+  state.addJobPrefillTitle = prefillTitle || null;
+
+  document.getElementById('aj-title').value  = prefillTitle || '';
+  document.getElementById('aj-notes').value  = '';
+  document.getElementById('aj-priority').checked = false;
+
+  // Populate assignees
+  const scroll = document.getElementById('aj-assignees');
+  const openBtn = `<button class="assign-btn selected" id="aj-open" onclick="selectAssignee(null)">
+    <div class="avatar-circle" style="background:var(--ink-mute);">—</div>
+    <span class="avatar-name">Open</span>
+  </button>`;
+  scroll.innerHTML = openBtn + state.deptCrew.map(p => `
+    <button class="assign-btn" id="aj-av-${p.id}" onclick="selectAssignee('${p.id}')">
+      <div class="avatar-circle" style="background:${p.color || deptColor(p.department)};">${escHtml(p.initials || initials(p.full_name))}</div>
+      <span class="avatar-name">${escHtml(p.full_name ? p.full_name.split(' ')[0] : p.initials)}</span>
+    </button>
+  `).join('');
+
+  // Populate sections
+  const sel = document.getElementById('aj-section');
+  sel.innerHTML = '<option value="">No section</option>' +
+    state.sections.map(s => `<option value="${s.id}">${escHtml(s.label)}</option>`).join('');
+
+  openModal('addjob-modal');
+}
+
+function selectAssignee(id) {
+  state.addJobAssigneeId = id;
+  document.querySelectorAll('#aj-assignees .assign-btn').forEach(b => b.classList.remove('selected'));
+  const target = id ? document.getElementById('aj-av-' + id) : document.getElementById('aj-open');
+  if (target) target.classList.add('selected');
+}
+
+async function confirmAddJob() {
+  const title = document.getElementById('aj-title').value.trim();
+  if (!title) { alert('Please enter a job title.'); return; }
+
+  const btn = document.getElementById('addjob-btn');
+  btn.disabled = true;
+
+  try {
+    await ensureWorklist();
+  } catch(e) {
+    alert('Error creating worklist: ' + e.message);
+    btn.disabled = false;
+    return;
+  }
+
+  const sectionId  = document.getElementById('aj-section').value || null;
+  const isPriority = document.getElementById('aj-priority').checked;
+  const notes      = document.getElementById('aj-notes').value.trim() || null;
+  const pos        = state.jobs.length;
+
+  const { data, error } = await db.from('worklist_jobs').insert({
+    worklist_id: state.worklist.id,
+    section_id:  sectionId,
+    title,
+    notes,
+    assignee_id: state.addJobAssigneeId,
+    is_priority: isPriority,
+    position:    pos,
+  }).select('*, assignee:profiles!worklist_jobs_assignee_id_fkey(full_name,initials,color), completer:profiles!worklist_jobs_completed_by_fkey(full_name,initials)').single();
+
+  btn.disabled = false;
+  if (error) { alert('Error: ' + error.message); return; }
+  state.jobs.push(data);
+  closeModal('addjob-modal');
+  renderWorklist();
+}
+
+// ═══════════════════════════════════════
+// CALENDAR TAB
+// ═══════════════════════════════════════
+
+async function loadCalendar() {
+  showLoading('calendar');
+
+  const today  = todayISO();
+  const future = new Date();
+  future.setDate(future.getDate() + 30);
+  const futureISO = future.toISOString().slice(0,10);
+
+  const { data, error } = await db
+    .from('calendar_events')
+    .select('*')
+    .eq('vessel_id', state.profile.vessel_id)
+    .gte('date', today)
+    .lte('date', futureISO)
+    .order('date');
+
+  if (error) { showError('calendar', error.message); return; }
+  state.events = data || [];
+  renderCalendar();
+  hideLoading('calendar');
+}
+
+function renderCalendar() {
+  const container = document.getElementById('calendar-content');
+  const hod = isHOD();
+
+  let html = `<div class="cal-header">
+    <div style="font-size:15px;font-weight:700;">Upcoming · 30 days</div>
+    ${hod ? `<button class="btn-sm btn-primary" onclick="openAddEventModal()">+ Add event</button>` : ''}
+  </div>`;
+
+  if (state.events.length === 0) {
+    html += `<div class="empty-state">
+      <p>${hod ? 'No events yet — add the first one.' : 'No upcoming events — check back soon.'}</p>
+    </div>`;
+    container.innerHTML = html;
+    return;
+  }
+
+  // Group by date
+  const grouped = {};
+  state.events.forEach(e => {
+    if (!grouped[e.date]) grouped[e.date] = [];
+    grouped[e.date].push(e);
+  });
+
+  Object.keys(grouped).sort().forEach(date => {
+    html += `<div class="cal-date-group">
+      <div class="cal-date-label">${fmtDateShort(date)}</div>
+      <div class="card">`;
+    grouped[date].forEach(ev => {
+      const color = EVENT_TYPE_COLOR[ev.type] || '#a8a29e';
+      const soft  = EVENT_TYPE_SOFT[ev.type]  || '#f5f5f4';
+      const label = EVENT_TYPE_LABEL[ev.type] || 'OTHER';
+      html += `<div class="cal-event-card">
+        <div class="cal-dot" style="background:${color};"></div>
+        <div class="cal-event-body">
+          <div class="cal-event-title">${escHtml(ev.title)}</div>
+          ${ev.notes ? `<div class="cal-event-notes">${escHtml(ev.notes)}</div>` : ''}
+        </div>
+        <span class="cal-type-badge" style="background:${soft};color:${color};">${label}</span>
+        ${hod ? `<button class="btn-sm btn-outline" style="padding:4px 8px;font-size:11px;margin-left:4px;" onclick="deleteEvent('${ev.id}')">✕</button>` : ''}
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function openAddEventModal() {
+  document.getElementById('ae-title').value = '';
+  document.getElementById('ae-date').value  = todayISO();
+  document.getElementById('ae-type').value  = 'drill';
+  document.getElementById('ae-notes').value = '';
+  openModal('addevent-modal');
+}
+
+async function confirmAddEvent() {
+  const title = document.getElementById('ae-title').value.trim();
+  const date  = document.getElementById('ae-date').value;
+  if (!title) { alert('Please enter an event title.'); return; }
+  if (!date)  { alert('Please select a date.'); return; }
+
+  const btn = document.getElementById('addevent-btn');
+  btn.disabled = true;
+
+  const { data, error } = await db.from('calendar_events').insert({
+    vessel_id:  state.profile.vessel_id,
+    title,
+    date,
+    type:       document.getElementById('ae-type').value,
+    notes:      document.getElementById('ae-notes').value.trim() || null,
+    created_by: state.session.user.id,
+  }).select().single();
+
+  btn.disabled = false;
+  if (error) { alert('Error: ' + error.message); return; }
+  closeModal('addevent-modal');
+  await loadCalendar();
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Delete this event?')) return;
+  const { error } = await db.from('calendar_events').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  state.events = state.events.filter(e => e.id !== id);
+  renderCalendar();
+}
+
+// ═══════════════════════════════════════
+// NOTES TAB
+// ═══════════════════════════════════════
+
+async function loadNotes() {
+  showLoading('notes');
+
+  const uid = state.session.user.id;
+  const vid = state.profile.vessel_id;
+
+  const { data, error } = await db
+    .from('reminders')
+    .select('*')
+    .eq('vessel_id', vid)
+    .order('created_at', { ascending: false });
+
+  if (error) { showError('notes', error.message); return; }
+  state.reminders = data || [];
+  renderNotes();
+  hideLoading('notes');
+}
+
+function renderNotes() {
+  const container = document.getElementById('notes-content');
+  const uid = state.session.user.id;
+  const isOfficer = state.profile.is_officer;
+  const hod = isHOD();
+
+  const myNotes      = state.reminders.filter(r => r.author_id === uid && !r.is_shared_officers);
+  const officerNotes = state.reminders.filter(r => r.is_shared_officers);
+
+  let html = '';
+
+  // Header
+  html += `<div class="notes-section-header">
+    <div style="font-size:15px;font-weight:700;">Notes</div>
+    <button class="btn-sm btn-primary" onclick="openAddNoteModal()">+ Add note</button>
+  </div>`;
+
+  // My notes
+  html += `<div style="margin-bottom:20px;">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);margin-bottom:8px;">My Notes</div>`;
+  if (myNotes.length === 0) {
+    html += `<div class="empty-state" style="padding:24px 0;"><p style="font-size:13px;">No personal notes yet.</p></div>`;
+  } else {
+    html += `<div class="card">`;
+    myNotes.forEach(r => { html += renderNoteCard(r, uid); });
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  // Officers' board
+  if (isOfficer && officerNotes.length > 0) {
+    html += `<div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);margin-bottom:8px;">Officers' Board</div>
+      <div class="card">`;
+    officerNotes.forEach(r => { html += renderNoteCard(r, uid); });
+    html += `</div></div>`;
+  } else if (isOfficer) {
+    html += `<div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);margin-bottom:8px;">Officers' Board</div>
+      <div class="empty-state" style="padding:24px 0;"><p style="font-size:13px;">No officer notes yet.</p></div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderNoteCard(r, uid) {
+  const isOwner = r.author_id === uid;
+  return `<div class="notes-card">
+    <div class="notes-card-header">
+      <div class="notes-card-title">${escHtml(r.title)}</div>
+      <span class="notes-card-time mono">${fmtTimestamp(r.created_at)}</span>
+    </div>
+    ${r.body ? `<div class="notes-card-body">${escHtml(r.body)}</div>` : ''}
+    ${r.is_shared_officers ? '<span class="shared-badge">Shared with officers</span>' : ''}
+    <div class="notes-card-actions">
+      <button class="notes-action-btn" onclick="addNoteToWorklist('${r.id}')">Add to worklist</button>
+      ${isOwner ? `<button class="notes-action-btn danger" onclick="deleteNote('${r.id}')">Delete</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function openAddNoteModal() {
+  document.getElementById('an-title').value = '';
+  document.getElementById('an-body').value  = '';
+  document.getElementById('an-shared').checked = false;
+  openModal('addnote-modal');
+}
+
+async function confirmAddNote() {
+  const title = document.getElementById('an-title').value.trim();
+  if (!title) { alert('Please enter a note title.'); return; }
+
+  const btn = document.getElementById('addnote-btn');
+  btn.disabled = true;
+
+  const { data, error } = await db.from('reminders').insert({
+    author_id:          state.session.user.id,
+    vessel_id:          state.profile.vessel_id,
+    title,
+    body:               document.getElementById('an-body').value.trim() || null,
+    is_shared_officers: document.getElementById('an-shared').checked,
+  }).select().single();
+
+  btn.disabled = false;
+  if (error) { alert('Error: ' + error.message); return; }
+  closeModal('addnote-modal');
+  await loadNotes();
+}
+
+async function deleteNote(id) {
+  if (!confirm('Delete this note?')) return;
+  const { error } = await db.from('reminders').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  state.reminders = state.reminders.filter(r => r.id !== id);
+  renderNotes();
+}
+
+function addNoteToWorklist(noteId) {
+  const r = state.reminders.find(r => r.id === noteId);
+  if (!r) return;
+  switchTab('worklist');
+  // Wait a tick for tab to render
+  setTimeout(async () => {
+    if (state.activeTab === 'worklist') {
+      // Reload dept crew if needed
+      if (state.deptCrew.length === 0) {
+        const { data } = await db.from('profiles').select('*')
+          .eq('vessel_id', state.profile.vessel_id)
+          .eq('department', state.profile.department);
+        state.deptCrew = data || [];
+      }
+      openAddJobModal(r.title);
+    }
+  }, 100);
+}
+
+// ═══════════════════════════════════════
+// REALTIME SUBSCRIPTIONS
+// ═══════════════════════════════════════
+
+function subscribeRealtime() {
+  unsubscribeRealtime();
+
+  const vid = state.profile.vessel_id;
+  const dept = state.profile.department;
+
+  // worklist_jobs — filter after fetch because channel filter is worklist_id
+  const jobsCh = db.channel('worklist_jobs_' + vid)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'worklist_jobs',
+    }, async (payload) => {
+      if (state.worklist && (
+        payload.new?.worklist_id === state.worklist.id ||
+        payload.old?.worklist_id === state.worklist.id
+      )) {
+        if (state.activeTab === 'worklist') await loadWorklist();
+      }
+    })
+    .subscribe();
+
+  // worklists
+  const wlCh = db.channel('worklists_' + vid)
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'worklists',
+    }, async (payload) => {
+      if (state.worklist && payload.new?.id === state.worklist.id) {
+        if (state.activeTab === 'worklist') await loadWorklist();
+      }
+    })
+    .subscribe();
+
+  // calendar_events
+  const calCh = db.channel('calendar_events_' + vid)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'calendar_events',
+    }, async (payload) => {
+      if (payload.new?.vessel_id === vid || payload.old?.vessel_id === vid) {
+        if (state.activeTab === 'calendar') await loadCalendar();
+      }
+    })
+    .subscribe();
+
+  // reminders
+  const remCh = db.channel('reminders_' + vid)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'reminders',
+    }, async (payload) => {
+      if (payload.new?.vessel_id === vid || payload.old?.vessel_id === vid) {
+        if (state.activeTab === 'notes') await loadNotes();
+      }
+    })
+    .subscribe();
+
+  state.channels = [jobsCh, wlCh, calCh, remCh];
+}
+
+function unsubscribeRealtime() {
+  state.channels.forEach(ch => {
+    try { db.removeChannel(ch); } catch(_) {}
+  });
+  state.channels = [];
+}
+
+// ═══════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════
+
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeModal(overlay.id);
+  });
+});
+
+// ═══════════════════════════════════════
+// LOADING / ERROR STATES
+// ═══════════════════════════════════════
+
+function showLoading(tab) {
+  document.getElementById(tab + '-loading').style.display = '';
+  document.getElementById(tab + '-content').style.display = 'none';
+}
+function hideLoading(tab) {
+  document.getElementById(tab + '-loading').style.display = 'none';
+  document.getElementById(tab + '-content').style.display = '';
+}
+function showError(tab, msg) {
+  const el = document.getElementById(tab + '-content');
+  el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--alert);font-size:14px;">Error: ${escHtml(msg)}</div>`;
+  hideLoading(tab);
+}
+
+// ═══════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Enter key on sign in form
+document.getElementById('si-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSignIn();
+});
+</script>
+</body>
+</html>
