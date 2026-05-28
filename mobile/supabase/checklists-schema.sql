@@ -1,9 +1,9 @@
 -- ═══════════════════════════════════════════════════════════════
--- YachtOps — Checklists schema addendum
--- Run this AFTER the main schema.sql
+-- YachtOps — Checklists schema
+-- Run AFTER schema.sql
+-- Safe to re-run: all statements are idempotent.
 -- ═══════════════════════════════════════════════════════════════
 
--- ── Checklist templates ───────────────────────────────────────────
 create table if not exists public.checklists (
   id          uuid primary key default gen_random_uuid(),
   vessel_id   uuid not null references public.vessels(id) on delete cascade,
@@ -14,7 +14,6 @@ create table if not exists public.checklists (
   created_at  timestamptz not null default now()
 );
 
--- ── Sections within a checklist ───────────────────────────────────
 create table if not exists public.checklist_sections (
   id            uuid primary key default gen_random_uuid(),
   checklist_id  uuid not null references public.checklists(id) on delete cascade,
@@ -22,7 +21,6 @@ create table if not exists public.checklist_sections (
   position      integer not null default 0
 );
 
--- ── Steps within a section ────────────────────────────────────────
 create table if not exists public.checklist_steps (
   id              uuid primary key default gen_random_uuid(),
   checklist_id    uuid not null references public.checklists(id) on delete cascade,
@@ -33,7 +31,6 @@ create table if not exists public.checklist_steps (
   position        integer not null default 0
 );
 
--- ── A single run of a checklist ───────────────────────────────────
 create table if not exists public.checklist_runs (
   id            uuid primary key default gen_random_uuid(),
   checklist_id  uuid not null references public.checklists(id) on delete cascade,
@@ -47,7 +44,6 @@ create table if not exists public.checklist_runs (
   unique (checklist_id, period_date)
 );
 
--- ── Per-step results within a run ─────────────────────────────────
 create table if not exists public.checklist_step_results (
   id          uuid primary key default gen_random_uuid(),
   run_id      uuid not null references public.checklist_runs(id) on delete cascade,
@@ -59,76 +55,97 @@ create table if not exists public.checklist_step_results (
   unique (run_id, step_id)
 );
 
--- ── RLS ───────────────────────────────────────────────────────────
-alter table public.checklists            enable row level security;
-alter table public.checklist_sections    enable row level security;
-alter table public.checklist_steps       enable row level security;
-alter table public.checklist_runs        enable row level security;
+alter table public.checklists             enable row level security;
+alter table public.checklist_sections     enable row level security;
+alter table public.checklist_steps        enable row level security;
+alter table public.checklist_runs         enable row level security;
 alter table public.checklist_step_results enable row level security;
 
+drop policy if exists "vessel crew can read checklists" on public.checklists;
 create policy "vessel crew can read checklists" on public.checklists
   for select using (vessel_id = public.my_vessel_id());
 
+drop policy if exists "officers can manage checklists" on public.checklists;
 create policy "officers can manage checklists" on public.checklists
   for all using (vessel_id = public.my_vessel_id() and public.am_officer());
 
-create policy "vessel crew can read sections" on public.checklist_sections
+drop policy if exists "vessel crew can read checklist sections" on public.checklist_sections;
+create policy "vessel crew can read checklist sections" on public.checklist_sections
   for select using (
     checklist_id in (select id from public.checklists where vessel_id = public.my_vessel_id())
   );
 
-create policy "officers can manage sections" on public.checklist_sections
+drop policy if exists "officers can manage checklist sections" on public.checklist_sections;
+create policy "officers can manage checklist sections" on public.checklist_sections
   for all using (
-    checklist_id in (select id from public.checklists where vessel_id = public.my_vessel_id() and public.am_officer())
+    checklist_id in (
+      select id from public.checklists where vessel_id = public.my_vessel_id() and public.am_officer()
+    )
   );
 
-create policy "vessel crew can read steps" on public.checklist_steps
+drop policy if exists "vessel crew can read checklist steps" on public.checklist_steps;
+create policy "vessel crew can read checklist steps" on public.checklist_steps
   for select using (
     checklist_id in (select id from public.checklists where vessel_id = public.my_vessel_id())
   );
 
-create policy "officers can manage steps" on public.checklist_steps
+drop policy if exists "officers can manage checklist steps" on public.checklist_steps;
+create policy "officers can manage checklist steps" on public.checklist_steps
   for all using (
-    checklist_id in (select id from public.checklists where vessel_id = public.my_vessel_id() and public.am_officer())
+    checklist_id in (
+      select id from public.checklists where vessel_id = public.my_vessel_id() and public.am_officer()
+    )
   );
 
-create policy "vessel crew can read runs" on public.checklist_runs
+drop policy if exists "vessel crew can read checklist runs" on public.checklist_runs;
+create policy "vessel crew can read checklist runs" on public.checklist_runs
   for select using (vessel_id = public.my_vessel_id());
 
-create policy "crew can create and update runs" on public.checklist_runs
+drop policy if exists "crew can manage checklist runs" on public.checklist_runs;
+create policy "crew can manage checklist runs" on public.checklist_runs
   for all using (vessel_id = public.my_vessel_id());
 
+drop policy if exists "vessel crew can read step results" on public.checklist_step_results;
 create policy "vessel crew can read step results" on public.checklist_step_results
   for select using (
     run_id in (select id from public.checklist_runs where vessel_id = public.my_vessel_id())
   );
 
+drop policy if exists "crew can manage step results" on public.checklist_step_results;
 create policy "crew can manage step results" on public.checklist_step_results
   for all using (
     run_id in (select id from public.checklist_runs where vessel_id = public.my_vessel_id())
   );
 
--- ── Realtime ──────────────────────────────────────────────────────
-alter publication supabase_realtime add table public.checklist_runs;
-alter publication supabase_realtime add table public.checklist_step_results;
+do $$ begin
+  alter publication supabase_realtime add table public.checklist_runs;
+exception when duplicate_object then null;
+end $$;
 
--- ── Seed data: Tender daily check ────────────────────────────────
--- (replace 00000000-0000-0000-0000-000000000001 with your vessel id)
+do $$ begin
+  alter publication supabase_realtime add table public.checklist_step_results;
+exception when duplicate_object then null;
+end $$;
+
+-- ── Seed: Tender daily check (skipped if already exists) ──────────
 do $$
 declare
-  ck_id uuid := gen_random_uuid();
+  vid   uuid := '00000000-0000-0000-0000-000000000001';
+  ck_id uuid;
   sec1  uuid := gen_random_uuid();
   sec2  uuid := gen_random_uuid();
   sec3  uuid := gen_random_uuid();
 begin
+  if exists (select 1 from public.checklists where vessel_id = vid and title = 'Tender T1 — pre-use inspection') then
+    return;
+  end if;
+  ck_id := gen_random_uuid();
   insert into public.checklists (id, vessel_id, department, frequency, title)
-  values (ck_id, '00000000-0000-0000-0000-000000000001', 'deck', 'daily', 'Tender T1 — pre-use inspection');
-
+  values (ck_id, vid, 'deck', 'daily', 'Tender T1 — pre-use inspection');
   insert into public.checklist_sections (id, checklist_id, title, position) values
     (sec1, ck_id, 'Visual + safety inspection', 0),
     (sec2, ck_id, 'Launch sequence — davit', 1),
     (sec3, ck_id, 'Post-launch · final checks', 2);
-
   insert into public.checklist_steps (checklist_id, section_id, text, hint, position) values
     (ck_id, sec1, 'Fuel level > 80% (visual gauge + dip)', null, 0),
     (ck_id, sec1, 'Bilge dry — no water, no fuel smell', null, 1),
